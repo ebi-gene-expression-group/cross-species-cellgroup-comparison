@@ -21,7 +21,7 @@ process extract_name {
 
 process extract_metadata {
 
-    publishDir '/Users/jmanning/projects/cross-species/workflow/outputs'
+    publishDir 'outputs'
 
     conda 'envs/scanpy.yml'
 
@@ -44,7 +44,7 @@ process extract_metadata {
 
 process intersect_metadatas {
 
-    publishDir '/Users/jmanning/projects/cross-species/workflow/outputs'
+    publishDir 'outputs'
     
     conda 'envs/ontology_index.yml'
     
@@ -75,14 +75,14 @@ process extract_orgpart {
 
 process subset_to_parts {
 
-    publishDir '/Users/jmanning/projects/cross-species/workflow/outputs'
+    publishDir 'outputs'
     
     conda 'envs/scanpy.yml'
     
     input:
         tuple val(expName), val(orgPart), path(anndata), path(metaFile)
     output:
-        tuple stdout, path("${expName}.${orgPart}.h5ad")
+        tuple val(expName), val(orgPart), path("${expName}.${orgPart}.h5ad")
 
     """
     #!/usr/bin/env python
@@ -96,6 +96,27 @@ process subset_to_parts {
 }
 
 // Re-do marker detection with scanpy-scripts
+
+process rank_genes_groups {
+
+    publishDir 'outputs/rergg', mode: 'copy'
+    
+    conda 'envs/scanpy-scripts.yml'
+    
+    input:
+        tuple val(expName), val(orgPart), path(annData)
+
+    output:
+        tuple val(expName), val(orgPart), path("${expName}.${orgPart}.rgg.h5ad"), path("${expName}.${orgPart}.rgg.tsv")
+
+    """
+    scanpy-find-markers --save "${expName}.${orgPart}.rgg.tsv" --n-genes '100' --groupby '${params.cell_type_field}' \
+        --key-added 'markers_${params.cell_type_field}' --method 't-test_overestim_var' --use-raw \
+         --reference 'rest' --filter-params 'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
+         --input-format 'anndata' $annData --show-obj stdout --output-format anndata "${expName}.${orgPart}.rgg.h5ad" 
+    """
+
+}
 
 // Compare marker gene lists to generate a list of potential relationships
 
@@ -115,5 +136,5 @@ workflow {
     //named_anndatas.cross(labelled_ad_subsets).map{ r -> r.flatten()[0,3,1,4]}.view()
 
     subset_to_parts(named_anndatas.cross(labelled_ad_subsets).map{ r -> r.flatten()[0,3,1,4]})
-
+    rank_genes_groups(subset_to_parts.out).groupTuple(by: 1).view()
 }
