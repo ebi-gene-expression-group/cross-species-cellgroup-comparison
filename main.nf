@@ -110,10 +110,25 @@ process rank_genes_groups {
         tuple val(expName), val(orgPart), path("${expName}.${orgPart}.rgg.h5ad"), path("${expName}.${orgPart}.rgg.tsv")
 
     """
+
+    scanpy-filter-cells --gene-name 'gene_symbols' --param 'c:n_genes' 400.0 \
+        1000000000.0 --param 'c:n_counts' 0.0 1000000000.0  --input-format 'anndata' \
+        $annData   --show-obj stdout --output-format anndata cellfiltered.h5ad
+
+    scanpy-filter-genes --param 'g:n_cells' 3.0 1000000000.0 --input-format 'anndata' \
+        cellfiltered.h5ad --show-obj stdout --output-format anndata genefiltered.h5ad
+
+    # This probably isn't doing anything with use_raw below, but we'll do it just in case
+
+    scanpy-normalise-data --normalize-to '10000.0' --save-raw yes \
+        --input-format 'anndata' genefiltered.h5ad  --show-obj stdout --output-format anndata \
+        normalised.h5ad
+
     scanpy-find-markers --save "${expName}.${orgPart}.rgg.tsv" --n-genes '100' --groupby '${params.cell_type_field}' \
         --key-added 'markers_${params.cell_type_field}' --method 't-test_overestim_var' --use-raw \
          --reference 'rest' --filter-params 'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
-         --input-format 'anndata' $annData --show-obj stdout --output-format anndata "${expName}.${orgPart}.rgg.h5ad" 
+         --input-format 'anndata' normalised.h5ad --show-obj stdout \
+        --output-format anndata "${expName}.${orgPart}.rgg.h5ad" 
     """
 
 }
