@@ -1,22 +1,5 @@
 nextflow.enable.dsl=2
 
-// Input both objects
-
-// Extract first parat of name
-
-process extract_name {
-
-    input:
-        path anndata
-    output:
-        tuple stdout, path(anndata)
-
-    """
-    echo -e $anndata | awk -F'.' '{print \$1}' | tr -d '\n'  
-    """
-}
-
-
 // Extract metadata
 
 process extract_metadata {
@@ -28,7 +11,7 @@ process extract_metadata {
     input:
       tuple val(id), path(anndata)
     output:
-      path "${id}.tsv"
+      tuple val(id), path("${id}.tsv")
     
     """
     #!/usr/bin/env python
@@ -51,8 +34,8 @@ process intersect_metadatas {
     input:
         tuple path(metaFile1), path(metaFile2)
     output:
-        tuple val("${metaFile1.simpleName}"), path("intersected/1/*"), emit: intersections_1
-        tuple val("${metaFile2.simpleName}"), path("intersected/2/*"), emit: intersections_2
+        tuple val("${metaFile1.baseName}"), path("intersected/1/*"), emit: intersections_1
+        tuple val("${metaFile2.baseName}"), path("intersected/2/*"), emit: intersections_2
 
     """
     compare_terms.R ${params.oboFile} $metaFile1 $metaFile2 organism_part_ontology organism_part intersected
@@ -133,23 +116,80 @@ process rank_genes_groups {
 
 }
 
+process compare_experiments {
+
+    input:
+        tuple val(tissue), val(expId1), val(expId2), path(markers1), path(markers2)
+
+    output:
+
+    """
+    compare_experiments.R ${markers1} ${markers2}
+    """
+
+}
+
 // Compare marker gene lists to generate a list of potential relationships
 
 workflow {
-    ad1 = Channel.fromPath(params.anndata1).first()  
-    ad2 = Channel.fromPath(params.anndata2).first()
 
-    ads = ad1.concat(ad2)
+    exps = Channel.from(["${params.expid1}"], ["${params.expid2}"])
+    ad1 = ["${params.expid1}", file("${params.anndata1}")]
+    ad2 = ["${params.expid2}", file("${params.anndata2}")]
 
-    inputs = Channel.fromList([ad1, ad2])
-    named_anndatas = extract_name(ads)
-    metadatas = extract_metadata(named_anndatas)
+    meta1 = extract_metadata(ad1)
+    meta2 = extract_metadata(ad2)
 
-    intersect_metadatas(metadatas.toList())    
-    labelled_ad_subsets = extract_orgpart(intersect_metadatas.out.intersections_1.concat(intersect_metadatas.out.intersections_2)) 
+
+//Channel.from( ["${params.expid1}", file("${params.anndata1}")], ["${params.expid2}", file("${params.anndata2}")] )
+    //species = Channel.from( ["${params.expid1}", "${params.species1}"], ["${params.expid2}", "${params.species2}"] )
+
+
+    //metadatas = exps.combine(extract_metadata(ads), by: 0)
+    //intersect_metadatas( metadatas.toList().map{r -> r.flatten()} ) 
+    
+    //exps.view()
+    //metadatas.view()    
+
+//metadatas.toList().map{r -> r.flatten()}.view()
+
+
+//named_anndatas = extract_name(ads)
+    //named_anndatas.view()
+
+   // Channel.from(tuple("${params.species1}", file("${params.anndata1}"))).concat(Channel.from(tuple("${params.species2", file("${params.anndata2}")))).view()
+
+
+    //ad1 = Channel.fromPath(params.anndata1).first()  
+    //ad2 = Channel.fromPath(params.anndata2).first()
+    
+    //ad1 = Channel.from(["${params.species1}", file("${params.anndata1}"]))
+    //ad2 = Channel.from(["${params.species2}", file("${params.anndata2}"]))
+    //ads = ad1.concat(ad2)
+    
+    //ads.view()
+
+
+    //species = Channel.from([["${params.species1}", ad1], [ "${params.species2}", ad2]]).transpose()
+
+    //ads.view()
+    //species.view()
+
+    //ads.merge(species).view()
+
+
+    //inputs = Channel.from([params.species1, ad1], [params.species2, ad2]])
+    
+    //ads = ad1.concat(ad2)
+
+    //metadatas = extract_metadata(named_anndatas)
+
+    //labelled_ad_subsets = extract_orgpart(intersect_metadatas.out.intersections_1.concat(intersect_metadatas.out.intersections_2)) 
 
     //named_anndatas.cross(labelled_ad_subsets).map{ r -> r.flatten()[0,3,1,4]}.view()
 
-    subset_to_parts(named_anndatas.cross(labelled_ad_subsets).map{ r -> r.flatten()[0,3,1,4]})
-    rank_genes_groups(subset_to_parts.out).groupTuple(by: 1).view()
+    //subset_to_parts(named_anndatas.cross(labelled_ad_subsets).map{ r -> r.flatten()[0,3,1,4]})
+    //rgg = rank_genes_groups(subset_to_parts.out).groupTuple(by: 1).map{ r -> tuple(r[1], r[0][0], r[0][1], r[3][0], r[3][1] }
+
+
 }
