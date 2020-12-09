@@ -11,8 +11,8 @@ rule all:
         dynamic(expand("%s/adata_subs/{exp}.{{organism_part}}.h5ad" % OUT_DIR, exp=EXPS))
 
 rule extract_metadata:
-    container:
-        "docker://quay.io/biocontainers/scanpy:1.6.0--py_0"    
+    conda:
+         'envs/scanpy-scripts.yml'
 
     input:
         anndata = "%s/{exp}.project.h5ad" % IN_DIR
@@ -42,8 +42,8 @@ rule intersect_metadatas:
         """
 
 rule subset_data_toparts:
-    container:
-        "docker://quay.io/biocontainers/scanpy:1.6.0--py_0"    
+    conda:
+         'envs/scanpy-scripts.yml'
     
     input:
         adata="%s/{exp}.project.h5ad" % IN_DIR,
