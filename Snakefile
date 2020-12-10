@@ -1,16 +1,21 @@
+configfile: "config.yaml"
+
 IN_DIR='inputs'
 OUT_DIR='output'
 OBO_FILE="%s/uberon.obo" % IN_DIR
 
-EXPS=[config["exp1"], config["exp2"]]
-CELL_TYPE_FIELD=config['cell_type_field']
+EXPS=[config.get("exp1"), config.get("exp2")]
+print(EXPS)
+
+CELL_TYPE_FIELD=config.get('cell_type_field')
 
 rule all:
     input:
         #metas=expand("%s/meta/{exp}.tsv" % OUT_DIR, exp=EXPS)
         #cellgroup_mappings="%s/E-MTAB-5061_vs_E-ENAD-15.txt" % OUT_DIR
         #dynamic(expand("%s/markers/{exp}.{{organism_part}}.tsv" % OUT_DIR, exp=EXPS))
-        dynamic(expand("%s/markers/{exp}.{{organism_part}}.markers.h5ad" % OUT_DIR, exp=EXPS))
+        #dynamic(expand("%s/markers/{exp}.{{organism_part}}.markers.h5ad" % OUT_DIR, exp=EXPS))
+        dynamic("%s/%s_vs_%s.{organism_part}.tsv" % (OUT_DIR, config.get('exp1'), config.get('exp2')))     
 
 rule extract_metadata:
     conda:
@@ -129,5 +134,25 @@ rule rgg:
              --input-format 'anndata' {input.adata} --show-obj stdout \
             --output-format anndata {output.adata}
         """
+
+rule compare_experiments:
+    input:
+        exp1="{outdir}/markers/{exp1}.{organism_part}.markers.tsv",
+        exp2="{outdir}/markers/{exp2}.{organism_part}.markers.tsv"
+
+    params:
+        species1=lambda wildcards, config[wildcards.exp1]['species']
+        species2=lambda wildcards, config[wildcards.exp2]['species']
+        
+    output:
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv"     
+
+    shell:
+        """
+
+        bin/compare_experients.R {exp1} {params.species1} {exp2} {params.species_2} {ortholog_mapping_file} {output.comp}
+        """
+
+
 
 
