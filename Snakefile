@@ -4,10 +4,11 @@ IN_DIR='inputs'
 OUT_DIR='output'
 OBO_FILE="%s/uberon.obo" % IN_DIR
 
-EXPS=[config.get("exp1"), config.get("exp2")]
+EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
 print(EXPS)
 
 CELL_TYPE_FIELD=config.get('cell_type_field')
+REPODIR = os.path.dirname(workflow.basedir)
 
 rule all:
     input:
@@ -15,7 +16,7 @@ rule all:
         #cellgroup_mappings="%s/E-MTAB-5061_vs_E-ENAD-15.txt" % OUT_DIR
         #dynamic(expand("%s/markers/{exp}.{{organism_part}}.tsv" % OUT_DIR, exp=EXPS))
         #dynamic(expand("%s/markers/{exp}.{{organism_part}}.markers.h5ad" % OUT_DIR, exp=EXPS))
-        dynamic("%s/%s_vs_%s.{organism_part}.tsv" % (OUT_DIR, config.get('exp1'), config.get('exp2')))     
+        dynamic("%s/%s_vs_%s.{organism_part}.tsv" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')))     
 
 rule extract_metadata:
     conda:
@@ -45,7 +46,8 @@ rule intersect_metadatas:
 
     shell:
         """
-        bin/compare_terms.R {input.oboFile} {input.metas[0]} {input.metas[1]} organism_part_ontology organism_part {OUT_DIR}/meta_subs
+        bin/compare_terms.R {input.oboFile} {input.metas[0]} {input.metas[1]} \
+            organism_part_ontology organism_part {OUT_DIR}/meta_subs
         """
 
 rule subset_data_toparts:
@@ -128,29 +130,34 @@ rule rgg:
 
     shell:
         """
-        scanpy-find-markers --save "{output.tsv}" --n-genes '100' --groupby '{CELL_TYPE_FIELD}' \
-            --key-added 'markers_{CELL_TYPE_FIELD}' --method 't-test_overestim_var' --use-raw \
-             --reference 'rest' --filter-params 'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
-             --input-format 'anndata' {input.adata} --show-obj stdout \
-            --output-format anndata {output.adata}
+        scanpy-find-markers --save "{output.tsv}" --n-genes '100' --groupby \
+            '{CELL_TYPE_FIELD}' --key-added 'markers_{CELL_TYPE_FIELD}' --method \
+            't-test_overestim_var' --use-raw --reference 'rest' --filter-params \
+            'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
+            --input-format 'anndata' {input.adata} --show-obj stdout --output-format \
+            anndata {output.adata}
         """
 
 rule compare_experiments:
     input:
         exp1="{outdir}/markers/{exp1}.{organism_part}.markers.tsv",
-        exp2="{outdir}/markers/{exp2}.{organism_part}.markers.tsv"
+        exp2="{outdir}/markers/{exp2}.{organism_part}.markers.tsv",
+        ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('compare_experiments').get('ortholog_mapping_file'))
 
-    params:
-        species1=lambda wildcards, config[wildcards.exp1]['species']
-        species2=lambda wildcards, config[wildcards.exp2]['species']
-        
     output:
         comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv"     
+    
+    params:
+        species1=config.get('exp1').get('species'),
+        species2=config.get('exp2').get('species'),
+        min_overlap=config.get('compare_experiments').get('min_overlap'),
+        pval_limit=config.get('compare_experiments').get('pval_limit')
 
     shell:
         """
-
-        bin/compare_experients.R {exp1} {params.species1} {exp2} {params.species_2} {ortholog_mapping_file} {output.comp}
+        bin/compare_experiments.R {input.exp1} {params.species1} {input.exp2} \
+            {params.species2} {input.ortholog_mapping_file} {params.pval_limit} \
+            {params.min_overlap} {output.comp}
         """
 
 

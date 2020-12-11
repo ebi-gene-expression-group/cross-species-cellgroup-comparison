@@ -1,8 +1,13 @@
 exp1: 
-    id: E-MTAB-5061
-    species: homo_sapiens 
+    id: 'E-MTAB-5061'
+    species: 'homo_sapiens'
 exp2: 
-    id: E-ENAD-15 
-    species: mus_musculus
+    id: 'E-ENAD-15'
+    species: 'mus_musculus'
 
-cell_type_field: inferred_cell_type_-_ontology_labels
+cell_type_field: 'inferred_cell_type_-_ontology_labels'
+
+compare_experiments:
+    ortholog_mapping_file: 'homo_sapiens_mus_musculus.txt' 
+    min_overlap: 0.1
+    pval_limit: 0.05
