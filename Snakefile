@@ -2,20 +2,11 @@ configfile: "config.yaml"
 
 IN_DIR='inputs'
 OUT_DIR='output'
-OBO_FILE="%s/uberon.obo" % IN_DIR
 
 EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
-print(EXPS)
-
-CELL_TYPE_FIELD=config.get('cell_type_field')
-REPODIR = os.path.dirname(workflow.basedir)
 
 rule all:
     input:
-        #metas=expand("%s/meta/{exp}.tsv" % OUT_DIR, exp=EXPS)
-        #cellgroup_mappings="%s/E-MTAB-5061_vs_E-ENAD-15.txt" % OUT_DIR
-        #dynamic(expand("%s/markers/{exp}.{{organism_part}}.tsv" % OUT_DIR, exp=EXPS))
-        #dynamic(expand("%s/markers/{exp}.{{organism_part}}.markers.h5ad" % OUT_DIR, exp=EXPS))
         dynamic("%s/%s_vs_%s.{organism_part}.tsv" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')))     
 
 rule extract_metadata:
@@ -26,7 +17,7 @@ rule extract_metadata:
         anndata = "%s/{exp}.project.h5ad" % IN_DIR
 
     output:
-        meta = "{outdir}/meta/{exp}.tsv"
+        meta = temp("{outdir}/meta/{exp}.tsv")
 
     shell:
         """
@@ -38,15 +29,15 @@ rule intersect_metadatas:
          'envs/ontology_index.yml'
     
     input:
-        oboFile = OBO_FILE,
-        metas = expand("{{outdir}}/meta/{exp}.tsv", exp = EXPS)
+        metas = expand("{{outdir}}/meta/{exp}.tsv", exp = EXPS),
+        ontology_file="%s/%s" % (IN_DIR, config.get('ontology_file'))
     
     output:
-        dynamic(expand("{{outdir}}/meta_subs/{exp}.{{organism_part}}.tsv", exp=EXPS))
+        temp(dynamic(expand("{{outdir}}/meta_subs/{exp}.{{organism_part}}.tsv", exp=EXPS)))
 
     shell:
         """
-        bin/compare_terms.R {input.oboFile} {input.metas[0]} {input.metas[1]} \
+        bin/compare_terms.R {input.ontology_file} {input.metas[0]} {input.metas[1]} \
             organism_part_ontology organism_part {OUT_DIR}/meta_subs
         """
 
@@ -125,13 +116,16 @@ rule rgg:
         adata="{outdir}/markers/{exp}.{organism_part}.normalised.h5ad"
 
     output:
-        adata="{outdir}/markers/{exp}.{organism_part}.markers.h5ad",
-        tsv="{outdir}/markers/{exp}.{organism_part}.markers.tsv"
+        adata=temp("{outdir}/markers/{exp}.{organism_part}.markers.h5ad"),
+        tsv=temp("{outdir}/markers/{exp}.{organism_part}.markers.tsv")
+
+    params:
+        cell_type_field = config.get('cell_type_field')        
 
     shell:
         """
         scanpy-find-markers --save "{output.tsv}" --n-genes '100' --groupby \
-            '{CELL_TYPE_FIELD}' --key-added 'markers_{CELL_TYPE_FIELD}' --method \
+            '{params.cell_type_field}' --key-added 'markers_{params.cell_type_field}' --method \
             't-test_overestim_var' --use-raw --reference 'rest' --filter-params \
             'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
             --input-format 'anndata' {input.adata} --show-obj stdout --output-format \
@@ -142,7 +136,7 @@ rule compare_experiments:
     input:
         exp1="{outdir}/markers/{exp1}.{organism_part}.markers.tsv",
         exp2="{outdir}/markers/{exp2}.{organism_part}.markers.tsv",
-        ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('compare_experiments').get('ortholog_mapping_file'))
+        ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
         comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv"     

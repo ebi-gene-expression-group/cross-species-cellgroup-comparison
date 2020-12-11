@@ -1,3 +1,6 @@
+ortholog_mapping_file: 'homo_sapiens_mus_musculus.txt' 
+ontology_file: 'uberon.obo'
+
 exp1: 
     id: 'E-MTAB-5061'
     species: 'homo_sapiens'
@@ -8,6 +11,5 @@ exp2:
 cell_type_field: 'inferred_cell_type_-_ontology_labels'
 
 compare_experiments:
-    ortholog_mapping_file: 'homo_sapiens_mus_musculus.txt' 
     min_overlap: 0.1
     pval_limit: 0.05

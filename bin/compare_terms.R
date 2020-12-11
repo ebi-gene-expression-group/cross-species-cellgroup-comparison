@@ -86,10 +86,6 @@ common_parts <- intersect(meta1$organism_part_ontology, meta2$organism_part_onto
 meta1 <- meta1[meta1[[ontIdCol]] %in% common_parts,  ]
 meta2 <- meta2[meta2[[ontIdCol]] %in% common_parts,  ]
 
-for (outDir in file.path(outPath, c(1, 2))){
-  dir.create(outDir, showWarnings = FALSE, recursive = TRUE)
-}
-
 # Output a metadata path 
 
 metas1 <- split(meta1, meta1[[ontNameCol]])
