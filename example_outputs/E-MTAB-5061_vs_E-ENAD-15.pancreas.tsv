@@ -1,0 +1,11 @@
+homo_sapiens cluster	mus_musculus cluster	intersect	intersect_prop
+professional antigen presenting cell	leukocyte	3	1
+mast cell	leukocyte	7	0.411764705882353
+endothelial cell	endothelial cell	31	0.340659340659341
+co-expression cell	type B pancreatic cell	14	0.147368421052632
+type B pancreatic cell	type B pancreatic cell	13	0.138297872340426
+pancreatic stellate cell	pancreatic stellate cell	13	0.13265306122449
+pancreatic stellate cell	endothelial cell	11	0.112244897959184
+pancreatic A cell	pancreatic PP cell	12	0.126315789473684
+pancreatic A cell	pancreatic A cell	10	0.105263157894737
+pancreatic D cell	pancreatic D cell	11	0.120879120879121
