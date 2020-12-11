@@ -54,7 +54,7 @@ rule subset_data_toparts:
 
     shell:
         """
-        scripts/subset_anndata.py {input.adata} {input.sub} {output.adata_sub}
+        scripts/subset_anndata.py "{input.adata}" "{input.sub}" "{output.adata_sub}"
         """
 
 rule filter_cells:

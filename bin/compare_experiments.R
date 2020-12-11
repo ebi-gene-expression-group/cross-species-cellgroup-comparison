@@ -2,8 +2,6 @@
 
 cl <- commandArgs(trailingOnly = TRUE)
 
-cl <- c('output/markers/E-MTAB-5061.pancreas.markers.tsv', 'homo_sapiens', 'output/markers/E-ENAD-15.pancreas.markers.tsv', 'mus_musculus', 'inputs/homo_sapiens_mus_musculus.txt', 0.05, 0.1, 'output/E-MTAB-5061_vs_E-ENAD-15.pancreas.tsv')
-
 marker_file_1 <- cl[1]
 species_1 <- cl[2]
 marker_file_2 <- cl[3]
