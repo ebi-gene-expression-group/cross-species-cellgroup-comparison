@@ -13,7 +13,7 @@ outPath <- cl[6]
 # Take two sets of ontology annotations, determine if any terms in one list
 # match, or are children of terms in another, and attempt to harmonise
 
-ont <- ontologyIndex::get_OBO(oboFile, propagate_relationships = 'part_of')
+ont <- ontologyIndex::get_OBO(oboFile, propagate_relationships = c('is_a', 'part_of'))
 
 meta1 <- read.delim(metaFile1, stringsAsFactors = F)
 meta2 <- read.delim(metaFile2, stringsAsFactors = F)
