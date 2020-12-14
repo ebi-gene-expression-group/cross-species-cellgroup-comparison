@@ -43,6 +43,11 @@ gene_intersect_props <- unlist(lapply(cluster_markers_1, function(cm1){
 
 valid_intersects <- which(unlist(lapply(gene_intersect_props, function(x) x > min_overlap)))
 
+if (length(valid_intersects) == 0){
+  write(paste0("No cell groups overlap between ", marker_file_1, ' and ', marker_file_2, ' at a proportion of at least ', min_overlap), stderr())
+  q(status = 1)
+}
+
 cluster_matches <- data.frame(do.call(rbind, unlist(lapply(names(valid_intersects), function(x) strsplit(x, '\\.')), recursive = FALSE)))
 colnames(cluster_matches) <- c(paste(species_1, 'cluster'), paste(species_2, 'cluster'))
 cluster_matches$intersect <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) length(x)))
