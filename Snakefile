@@ -10,10 +10,8 @@ wildcard_constraints:
 
 rule all:
     input:
-        dynamic("%s/%s_vs_%s.{organism_part}.celltypecomp.txt" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')))     
-        #dynamic("%s/%s_vs_%s.{organism_part}.tsv" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')))     
-        #dynamic(expand("%s/{exp}.{{organism_part}}.markers.h5ad" % OUT_DIR, exp=EXPS))
-        #dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS))
+        dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS)),
+        dynamic("%s/%s_vs_%s.{organism_part}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id'))),     
 
 rule symlink_inputs:
     input:
@@ -176,7 +174,7 @@ rule compare_experiments:
         ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
-        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}.tsv"     
+        comp=temp("{prefix}/{exp1}_vs_{exp2}.{organism_part}.tsv")     
     
     params:
         species1=config.get('exp1').get('species'),
@@ -197,19 +195,19 @@ rule compare_celltypes:
         exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv"
 
     output:
-        txt="{outdir}/{exp1}_vs_{exp2}.{organism_part}.celltypecomp.txt"     
+        txt=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}.celltypecomp.txt")     
     
     shell:
         """
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" > {output.txt}
         cat {input.exp1} >> {output.txt}
-        echo -e "\n\n" >> {output.txt}
+        echo -e "\n" >> {output.txt}
 
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" >> {output.txt}
         cat {input.exp2} >> {output.txt}
-        echo -e "\n\n" >> {output.txt}
+        echo -e "\n" >> {output.txt}
 
-        echo -e "Common cell types:\n" >> {output.txt}
+        echo -e "## Common cell types:\n" >> {output.txt}
         comm -12 {input.exp1} {input.exp2} >> {output.txt}
         """
 
@@ -223,9 +221,10 @@ rule report_comparison:
 
     shell:
         """
-        cat {input.comp} > {output.report}
-        echo -e "# Matches predicted from marker genes:" >> {output.report}
-        cat {input.txt} >> {output.report}
+        echo -e "# Known composition of inputs\n" > {output.report}
+        cat {input.celltypes} >> {output.report}
+        echo -e "\n# Matches predicted from marker genes:\n" >> {output.report}
+        cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |/g' >> {output.report}
         """
 
 
