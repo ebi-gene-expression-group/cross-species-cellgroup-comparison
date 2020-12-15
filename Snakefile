@@ -200,15 +200,15 @@ rule compare_celltypes:
     shell:
         """
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" > {output.txt}
-        cat {input.exp1} | sed 's/$/  /' | sed 's/^/ -/g' >> {output.txt}
+        cat {input.exp1} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         echo -e "\n" >> {output.txt}
 
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" >> {output.txt}
-        cat {input.exp2} | sed 's/$/  /' | sed 's/^/ -/g' >> {output.txt}
+        cat {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         echo -e "\n" >> {output.txt}
 
         echo -e "## Common cell types:\n" >> {output.txt}
-        comm -12 {input.exp1} {input.exp2} >> {output.txt}
+        comm -12 {input.exp1} {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         """
 
 rule report_comparison:
@@ -221,14 +221,13 @@ rule report_comparison:
 
     shell:
         """
-        echo -e "# Known composition of inputs\n" > {output.report}
+        echo -e "# Known composition of inputs\n\n" > {output.report}
         cat {input.celltypes} >> {output.report}
         echo -e "\n# Matches predicted from marker genes:\n" >> {output.report}
-        cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' >> {output.report}
+        cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
+
+        head -n 1 tab.tmp >> {output.report}
+        echo -e "| --- | --- | --- | --- |" >> {output.report}
+        tail -n +2 tab.tmp >> {output.report}
+        rm tab.tmp
         """
-
-
-
-
-
-
