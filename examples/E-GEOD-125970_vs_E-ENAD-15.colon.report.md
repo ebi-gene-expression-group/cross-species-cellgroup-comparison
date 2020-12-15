@@ -2,7 +2,7 @@
 
 ## E-GEOD-125970 colon cell types:
 
-enterocyte of epithelium of large intestine
+enterocyte of epithelium of large intestine  
 epithelial progenitor cell of large intestine
 intestinal crypt stem cell
 intestinal crypt transit amplifying cell
