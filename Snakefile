@@ -33,6 +33,9 @@ rule extract_metadata:
     output:
         meta = temp("{prefix}.meta.tsv")
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+
     shell:
         """
         scripts/extract_meta.py {input.anndata} {output.meta}        
@@ -50,6 +53,9 @@ rule extract_celltypes:
 
     params:
         cell_type_field = config.get('cell_type_field')        
+    
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
     
     shell:
         """
@@ -84,6 +90,9 @@ rule subset_data_toparts:
         adata="{prefix}.h5ad",
         sub="{prefix}.{organism_part}.submeta.tsv"        
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+    
     output:
         adata_sub=temp("{prefix}.{organism_part}.sub.h5ad")
 
@@ -102,6 +111,9 @@ rule filter_cells:
     output:
         adata=temp("{prefix}.cellfiltered.h5ad")
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+    
     shell:
         """
         scanpy-filter-cells --gene-name 'gene_symbols' --param 'c:n_genes' 400.0 \
@@ -119,6 +131,9 @@ rule filter_genes:
     output:
         adata=temp("{prefix}.genefiltered.h5ad")
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+    
     shell:
         """
         scanpy-filter-genes --param 'g:n_cells' 3.0 1000000000.0 --input-format 'anndata' \
@@ -136,6 +151,9 @@ rule normalise:
     output:
         adata=temp("{prefix}.normalised.h5ad")
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+    
     shell:
         """
         scanpy-normalise-data --normalize-to '10000.0' --save-raw yes \
@@ -157,6 +175,9 @@ rule find_markers:
     params:
         cell_type_field = config.get('cell_type_field')        
 
+    resources:
+        mem_mb=lambda wildcards, attempt: attempt * 4000
+    
     shell:
         """
         scanpy-find-markers --save "{output.tsv}" --n-genes '100' --groupby \
