@@ -239,11 +239,17 @@ rule report_comparison:
     output:
         report="{outdir}/{exp1}_vs_{exp2}.{organism_part}.report.md"
 
+    params:
+        min_overlap=config.get('compare_experiments').get('min_overlap'),
+        pval_limit=config.get('compare_experiments').get('pval_limit')
+    
     shell:
         """
         echo -e "# Known composition of inputs\n\n" > {output.report}
         cat {input.celltypes} >> {output.report}
-        echo -e "\n# Matches predicted from marker genes:\n" >> {output.report}
+        echo -e "\n# Cell group matches based on marker genes:\n" >> {output.report}
+        echo -e "\n## Parameters  \n\n - Minimum p value: {params.pval_limit}  \n - Minimum proportion overlap: {params.min_overlap}  \n" >> {output.report}
+        echo -e "## Results \n" >> {output.report}
         cat {input.predictcomp} >> {output.report}
         cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
 
