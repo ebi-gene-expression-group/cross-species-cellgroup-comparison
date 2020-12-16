@@ -31,6 +31,8 @@
 
 # Matches predicted from marker genes:
 
+2 of 3 known intersecting cell types were predicted.
+
 | homo_sapiens cluster | mus_musculus cluster | intersect | intersect_prop | intersect_gene_ids | intersect_gene_symbols |  
 | --- | --- | --- | --- | --- | --- |
 | intestinal enteroendocrine cell | enteroendocrine cell | 1 | 1 | ENSMUSG00000039278 | Pcsk1n |  

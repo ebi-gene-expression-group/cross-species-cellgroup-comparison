@@ -211,9 +211,27 @@ rule compare_celltypes:
         comm -12 {input.exp1} {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         """
 
+rule compare_celltypes_prediction:
+    input:
+        exp1 = "{outdir}/{exp1}.{organism_part}.sub.celltypes.tsv",
+        exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv",
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv",
+
+    output:
+        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}.predictcomp.md")     
+    
+    shell:
+        """
+        comm -12 {input.exp1} {input.exp2} > intersect.txt
+        intersect=$(cat intersect.txt | wc -l)
+        correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
+        echo -e "$correct of $intersect known intersecting cell types were predicted.\n" > {output.md}
+        """
+
 rule report_comparison:
     input:
         comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv",
+        predictcomp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.predictcomp.md",
         celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}.celltypecomp.txt"
 
     output:
@@ -224,6 +242,7 @@ rule report_comparison:
         echo -e "# Known composition of inputs\n\n" > {output.report}
         cat {input.celltypes} >> {output.report}
         echo -e "\n# Matches predicted from marker genes:\n" >> {output.report}
+        cat {input.predictcomp} >> {output.report}
         cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
 
         head -n 1 tab.tmp >> {output.report}
