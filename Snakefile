@@ -143,7 +143,7 @@ rule normalise:
             {output.adata}
         """
 
-rule rgg:
+rule find_markers:
     conda:
          'envs/scanpy-scripts.yml'
     

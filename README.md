@@ -8,6 +8,8 @@ In Single-cell Expression Atlas we're interesting in relating cell groupings (cl
  4. Re-filter, re-normalise, and re-derive marker genes using Scanpy.
  5. Derive mapped pairs of cell groupings between the two experiments.
 
+![workflow schematic](dag.png)
+
 ## Snakemake workflow
 
 The Snakemake workflow in this repository performs the above steps given the following inputs:
