@@ -46,7 +46,9 @@
 
 # Matches predicted from marker genes:
 
-5 of 8 known intersecting cell types were predicted.
+4 of 8 known intersecting cell types were predicted as top match by marker gene composition.  
+
+5 of 8 known intersecting cell types were predicted as a match (at any rank).  
 
 | homo_sapiens cluster | mus_musculus cluster | intersect | intersect_prop | intersect_gene_ids | intersect_gene_symbols |  
 | --- | --- | --- | --- | --- | --- |

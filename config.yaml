@@ -2,7 +2,7 @@ ortholog_mapping_file: 'homo_sapiens_mus_musculus.txt'
 ontology_file: 'uberon.obo'
 
 exp1: 
-    id: 'E-MTAB-5061'
+    id: 'E-GEOD-125970'
     species: 'homo_sapiens'
 exp2: 
     id: 'E-ENAD-15'

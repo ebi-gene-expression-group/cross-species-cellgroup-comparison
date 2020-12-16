@@ -224,8 +224,10 @@ rule compare_celltypes_prediction:
         """
         comm -12 {input.exp1} {input.exp2} > intersect.txt
         intersect=$(cat intersect.txt | wc -l)
-        correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
-        echo -e "$correct of $intersect known intersecting cell types were predicted.\n" > {output.md}
+        correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '!_[$1]++' | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
+        echo -e "$correct of $intersect known intersecting cell types were predicted as top match by marker gene composition.  \n" > {output.md}
+        almost_correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
+        echo -e "$almost_correct of $intersect known intersecting cell types were predicted as a match (at any rank).  \n" >> {output.md}
         """
 
 rule report_comparison:
