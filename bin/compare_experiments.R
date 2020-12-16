@@ -52,6 +52,8 @@ cluster_matches <- data.frame(do.call(rbind, unlist(lapply(names(valid_intersect
 colnames(cluster_matches) <- c(paste(species_1, 'cluster'), paste(species_2, 'cluster'))
 cluster_matches$intersect <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) length(x)))
 cluster_matches$intersect_prop <- unlist(gene_intersect_props[names(valid_intersects)])
+cluster_matches$intersect_gene_ids <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) paste(x, collapse = ', ')))
+cluster_matches$intersect_gene_symbols <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) paste(ortholog_mapping[match(x, ortholog_mapping[[species_2_orth_col]]),paste0(species_2, '_gene_name')], collapse = ', ')))
 
 # Get the set of matching clusters passing criteria for each query
 cluster_matches <- cluster_matches[order(cluster_matches$intersect_prop, decreasing = TRUE),]

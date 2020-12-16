@@ -227,7 +227,7 @@ rule report_comparison:
         cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
 
         head -n 1 tab.tmp >> {output.report}
-        echo -e "| --- | --- | --- | --- |" >> {output.report}
+        echo -e "| --- | --- | --- | --- | --- | --- |" >> {output.report}
         tail -n +2 tab.tmp >> {output.report}
         rm tab.tmp
         """
