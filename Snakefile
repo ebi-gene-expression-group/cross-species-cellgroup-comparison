@@ -203,7 +203,7 @@ rule compare_celltypes:
         cat {input.exp1} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         echo -e "\n" >> {output.txt}
 
-        echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" >> {output.txt}
+        echo -e "## {wildcards.exp2} {wildcards.organism_part} cell types:\n" >> {output.txt}
         cat {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
         echo -e "\n" >> {output.txt}
 
