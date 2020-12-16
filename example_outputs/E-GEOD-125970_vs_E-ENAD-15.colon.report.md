@@ -13,7 +13,7 @@
  - paneth-like cell  
 
 
-## E-GEOD-125970 colon cell types:
+## E-ENAD-15 colon cell types:
 
  - Brush cell of epithelium proper of large intestine  
  - enterocyte of epithelium of large intestine  

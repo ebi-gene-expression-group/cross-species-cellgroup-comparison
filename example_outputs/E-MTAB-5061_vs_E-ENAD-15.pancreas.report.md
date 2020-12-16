@@ -19,7 +19,7 @@
  - type B pancreatic cell  
 
 
-## E-MTAB-5061 pancreas cell types:
+## E-ENAD-15 pancreas cell types:
 
  - endothelial cell  
  - leukocyte  
