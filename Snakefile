@@ -10,6 +10,7 @@ wildcard_constraints:
 
 rule all:
     input:
+        expand("%s/{exp}.markers.tsv" % OUT_DIR, exp=EXPS),
         dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS)),
         dynamic("%s/%s_vs_%s.{organism_part}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id'))),     
 
@@ -112,7 +113,7 @@ rule filter_cells:
         adata=temp("{prefix}.cellfiltered.h5ad")
 
     resources:
-        mem_mb=lambda wildcards, attempt: attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 8000
     
     shell:
         """
@@ -132,7 +133,7 @@ rule filter_genes:
         adata=temp("{prefix}.genefiltered.h5ad")
 
     resources:
-        mem_mb=lambda wildcards, attempt: attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 8000
     
     shell:
         """
@@ -152,7 +153,7 @@ rule normalise:
         adata=temp("{prefix}.normalised.h5ad")
 
     resources:
-        mem_mb=lambda wildcards, attempt: attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 8000
     
     shell:
         """
@@ -169,18 +170,18 @@ rule find_markers:
         adata="{prefix}.normalised.h5ad"
 
     output:
-        adata=temp("{prefix}.markers.h5ad"),
-        tsv=temp("{prefix}.markers.tsv")
+        adata="{prefix}.markers.h5ad",
+        tsv="{prefix}.markers.tsv"
 
     params:
         cell_type_field = config.get('cell_type_field')        
 
     resources:
-        mem_mb=lambda wildcards, attempt: attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 64000
     
     shell:
         """
-        scanpy-find-markers --save "{output.tsv}" --n-genes '100' --groupby \
+        scanpy-find-markers --save "{output.tsv}" --groupby \
             '{params.cell_type_field}' --key-added 'markers_{params.cell_type_field}' --method \
             't-test_overestim_var' --use-raw --reference 'rest' --filter-params \
             'min_in_group_fraction:0.0,max_out_group_fraction:1.0,min_fold_change:1.0' \
