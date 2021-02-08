@@ -8,11 +8,17 @@ marker_file_2 <- cl[3]
 species_2 <- cl[4]
 ortholog_mapping_file <- cl[5]
 pval_limit <- as.numeric(cl[6])
-min_overlap <- as.numeric(cl[7])
-outfile <- cl[8]
+ngenes <- as.numeric(cl[7])
+min_overlap <- as.numeric(cl[8])
+outfile <- cl[9]
 
-markers_1 <- subset(read.delim(marker_file_1, stringsAsFactors = FALSE), pvals_adj < pval_limit)
-markers_2 <- subset(read.delim(marker_file_2, stringsAsFactors = FALSE), pvals_adj < pval_limit)
+if (ngenes == 'all'){
+    ngenes <- 1000000
+}
+
+markers_1 <- subset(read.delim(marker_file_1, stringsAsFactors = FALSE), pvals_adj < pval_limit & rank < ngenes)
+markers_2 <- subset(read.delim(marker_file_2, stringsAsFactors = FALSE), pvals_adj < pval_limit & rank < ngenes)
+
 ortholog_mapping <- read.delim(ortholog_mapping_file)
 species_1_orth_col <- paste0(species_1, '_gene_id')
 species_2_orth_col <- paste0(species_2, '_gene_id')
