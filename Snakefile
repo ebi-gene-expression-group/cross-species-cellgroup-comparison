@@ -1,18 +1,29 @@
+import itertools
 configfile: "config.yaml"
 
 IN_DIR='inputs'
 OUT_DIR='output'
 
-EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
-
 wildcard_constraints:
-    exp = "[^\.]",
+    exp = "[^\.]+",
+    exp1 = "[^\.]+",
+    exp2 = "[^\.]+",
+    pval_limit = "[^\-]+",
+    n_genes = "[^\-]+",
+    min_overlap = "[^\-]+"
+
+pval_limits = [ str(x) for x in config.get('compare_experiments').get('pval_limit') ]
+n_gene_limits = [ str(x) for x in config.get('compare_experiments').get('n_genes') ]
+min_overlap_limits = [ str(x) for x in config.get('compare_experiments').get('min_overlap') ]
+
+PARAMSETS = [ '-'.join(x) for x in list(itertools.product(pval_limits, n_gene_limits, min_overlap_limits)) ]
+EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
 
 rule all:
     input:
         expand("%s/{exp}.markers.tsv" % OUT_DIR, exp=EXPS),
         dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS)),
-        dynamic("%s/%s_vs_%s.{organism_part}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id'))),     
+        dynamic(expand("%s/%s_vs_%s.{{organism_part}}/{paramset}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), paramset = PARAMSETS))
 
 rule symlink_inputs:
     input:
@@ -102,6 +113,21 @@ rule subset_data_toparts:
         scripts/subset_anndata.py "{input.adata}" "{input.sub}" "{output.adata_sub}"
         """
 
+# When we want to make markers from the un-split h5ad
+
+rule whole_sub:
+    input:
+        adata="{prefix}.sub.h5ad",
+
+    output:
+        adata_sub=temp("{prefix}.sub.h5ad")
+
+    shell:
+        """
+        ln -s {input.adata} {input.adata_sub}
+        """
+
+
 rule filter_cells:
     conda:
          'envs/scanpy-scripts.yml'
@@ -174,7 +200,8 @@ rule find_markers:
         tsv="{prefix}.markers.tsv"
 
     params:
-        cell_type_field = config.get('cell_type_field')        
+        cell_type_field = config.get('cell_type_field'),   
+        n_genes = '' if config.get('n_genes') is None else "--n-genes '%s'" % config.get('n_genes') 
 
     resources:
         mem_mb=lambda wildcards, attempt: attempt * 64000
@@ -196,19 +223,17 @@ rule compare_experiments:
         ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
-        comp=temp("{prefix}/{exp1}_vs_{exp2}.{organism_part}.tsv")     
+        comp=temp("{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv")     
     
     params:
         species1=config.get('exp1').get('species'),
         species2=config.get('exp2').get('species'),
-        min_overlap=config.get('compare_experiments').get('min_overlap'),
-        pval_limit=config.get('compare_experiments').get('pval_limit')
 
     shell:
         """
         bin/compare_experiments.R {input.exp1} {params.species1} {input.exp2} \
-            {params.species2} {input.ortholog_mapping_file} {params.pval_limit} \
-            {params.min_overlap} {output.comp}
+            {params.species2} {input.ortholog_mapping_file} {wildcards.pval_limit} \
+            {wildcards.n_genes} {wildcards.min_overlap} {output.comp}
         """
 
 rule compare_celltypes:
@@ -217,7 +242,7 @@ rule compare_celltypes:
         exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv"
 
     output:
-        txt=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}.celltypecomp.txt")     
+        txt=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt")     
     
     shell:
         """
@@ -237,10 +262,10 @@ rule compare_celltypes_prediction:
     input:
         exp1 = "{outdir}/{exp1}.{organism_part}.sub.celltypes.tsv",
         exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv",
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv",
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv",
 
     output:
-        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}.predictcomp.md")     
+        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.md")     
     
     shell:
         """
@@ -254,23 +279,18 @@ rule compare_celltypes_prediction:
 
 rule report_comparison:
     input:
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.tsv",
-        predictcomp="{outdir}/{exp1}_vs_{exp2}.{organism_part}.predictcomp.md",
-        celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}.celltypecomp.txt"
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv",
+        predictcomp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.md",
+        celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt"
 
     output:
-        report="{outdir}/{exp1}_vs_{exp2}.{organism_part}.report.md"
-
-    params:
-        min_overlap=config.get('compare_experiments').get('min_overlap'),
-        pval_limit=config.get('compare_experiments').get('pval_limit')
-    
+        report="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.report.md"
     shell:
         """
         echo -e "# Known composition of inputs\n\n" > {output.report}
         cat {input.celltypes} >> {output.report}
         echo -e "\n# Cell group matches based on marker genes:\n" >> {output.report}
-        echo -e "\n## Parameters  \n\n - Minimum p value: {params.pval_limit}  \n - Minimum proportion overlap: {params.min_overlap}  \n" >> {output.report}
+        echo -e "\n## Parameters  \n\n - Minimum p value: {wildcards.pval_limit}  \n - Minimum proportion overlap: {wildcards.min_overlap}  \n" >> {output.report}
         echo -e "## Results \n" >> {output.report}
         cat {input.predictcomp} >> {output.report}
         cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
