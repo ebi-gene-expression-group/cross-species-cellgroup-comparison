@@ -1,0 +1,3 @@
+[submodule "samap-workflow"]
+	path = samap-workflow
+	url = git@github.com:ebi-gene-expression-group/samap-workflow.git

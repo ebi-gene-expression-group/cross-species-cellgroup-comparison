@@ -4,13 +4,17 @@ ontology_file: 'uberon.obo'
 exp1: 
     id: 'E-MTAB-8410'
     species: 'homo_sapiens'
+    transcriptome: 'Homo_sapiens.GRCh38.cdna.all.99.fa.gz'
+
 exp2: 
     id: 'E-ENAD-15'
     species: 'mus_musculus'
+    transcriptome: 'Mus_musculus.GRCm38.cdna.all.99.fa.gz'
 
 cell_type_field: 'inferred_cell_type_-_ontology_labels'
 
 compare_experiments:
-    min_overlap: [ 0.05, 0.1, 0.2 ]
-    pval_limit: [ 1, 0.1, 0.05, 0.01, 0.001 ]
-    n_genes: [ 10, 100, 1000 ]
+    min_overlap: [ 0.05 ]
+    pval_limit: [ 1 ]
+    n_genes: [ 100 ]
+    samap_threshold: [ 0.05 ]

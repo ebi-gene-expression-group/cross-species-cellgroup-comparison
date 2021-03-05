@@ -8,22 +8,27 @@ wildcard_constraints:
     exp = "[^\.]+",
     exp1 = "[^\.]+",
     exp2 = "[^\.]+",
+    method = "[^\.]+",
     pval_limit = "[^\-]+",
     n_genes = "[^\-]+",
-    min_overlap = "[^\-]+"
+    min_overlap = "[^\-]+",
+    samap_threshold = "[^\-]+"
 
 pval_limits = [ str(x) for x in config.get('compare_experiments').get('pval_limit') ]
 n_gene_limits = [ str(x) for x in config.get('compare_experiments').get('n_genes') ]
 min_overlap_limits = [ str(x) for x in config.get('compare_experiments').get('min_overlap') ]
+samap_thresholds = [ str(x) for x in config.get('compare_experiments').get('samap_threshold') ]
 
-PARAMSETS = [ '-'.join(x) for x in list(itertools.product(pval_limits, n_gene_limits, min_overlap_limits)) ]
+MARKERS_PARAMSETS = [ '-'.join(x) for x in list(itertools.product(pval_limits, n_gene_limits, min_overlap_limits)) ]
 EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
 
 rule all:
     input:
         expand("%s/{exp}.markers.tsv" % OUT_DIR, exp=EXPS),
         dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS)),
-        dynamic(expand("%s/%s_vs_%s.{{organism_part}}/{paramset}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), paramset = PARAMSETS))
+        dynamic(expand("%s/%s_vs_%s.{{organism_part}}/markers-{pval_limit}-{n_genes}-{min_overlap}.samap-{samap_threshold}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), pval_limit = pval_limits, n_genes = n_gene_limits, min_overlap = min_overlap_limits, samap_threshold = samap_thresholds))
+
+        #dynamic(expand("%s/%s_vs_%s.{{organism_part}}/markers-{paramset}.samap-.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), paramset = MARKERS_PARAMSETS))
 
 rule symlink_inputs:
     input:
@@ -61,7 +66,7 @@ rule extract_celltypes:
         meta = "{prefix}.meta.tsv",
 
     output:
-        celltypes = temp("{prefix}.celltypes.tsv")
+        celltypes = "{prefix}.celltypes.tsv"
 
     params:
         cell_type_field = config.get('cell_type_field')        
@@ -223,7 +228,7 @@ rule compare_experiments:
         ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
-        comp=temp("{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv")     
+        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markers.tsv"     
     
     params:
         species1=config.get('exp1').get('species'),
@@ -247,8 +252,6 @@ rule compare_celltypes:
     shell:
         """
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" > {output.txt}
-        cat {input.exp1} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
-        echo -e "\n" >> {output.txt}
 
         echo -e "## {wildcards.exp2} {wildcards.organism_part} cell types:\n" >> {output.txt}
         cat {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
@@ -262,10 +265,10 @@ rule compare_celltypes_prediction:
     input:
         exp1 = "{outdir}/{exp1}.{organism_part}.sub.celltypes.tsv",
         exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv",
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv",
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{predict_params}.prediction.{method}.tsv",
 
     output:
-        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.md")     
+        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/{predict_params}.predictcomp.{method}.md")     
     
     shell:
         """
@@ -277,26 +280,94 @@ rule compare_celltypes_prediction:
         echo -e "$almost_correct of $intersect known intersecting cell types were predicted as a match (at any rank).  \n" >> {output.md}
         """
 
-rule report_comparison:
+rule samap_config:
+    conda:
+         'envs/yaml.yml'
+    
     input:
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.tsv",
-        predictcomp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.md",
-        celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt"
+        adata1="{dir}/{exp1}.{organism_part}.sub.h5ad",
+        adata2="{dir}/{exp2}.{organism_part}.sub.h5ad"
+   
+    output:
+        yaml=temp("{dir}/{exp1}_vs_{exp2}.{organism_part}.samap_config.yaml")
+
+    script:
+        "scripts/make_samap_config.py" 
+
+rule run_samap:
+    input:
+        adata1="{outdir}/{exp1}.{organism_part}.sub.h5ad",
+        adata2="{outdir}/{exp2}.{organism_part}.sub.h5ad",
+        transcriptome1=config.get('exp1').get('transcriptome'),
+        transcriptome2=config.get('exp2').get('transcriptome'),
+        config="{outdir}/{exp1}_vs_{exp2}.{organism_part}.samap_config.yaml"
 
     output:
-        report="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.report.md"
+        cell_type_map="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv",
+        cell_type_map_png="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.png"
+
+    shell:
+        """
+        snakemake -s {workflow.basedir}/samap-workflow/workflow/Snakefile --profile lsf --rerun-incomplete --config configfile={input.config}
+        mv {wildcards.outdir}/{wildcards.exp1}_vs_{wildcards.exp2}.{wildcards.organism_part}/*celltype_map.tsv {output.cell_type_map}
+        mv {wildcards.outdir}/{wildcards.exp1}_vs_{wildcards.exp2}.{wildcards.organism_part}/*celltype_map_heatmap.png {output.cell_type_map_png} 
+        """
+
+# Get SAMap predictions in format we can use 
+
+rule parse_samap_predictions:
+    input:
+        cell_type_map="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv",
+
+    output:
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.prediction.samap.tsv"
+
+    params:
+        species1=config.get('exp1').get('species'),
+        species2=config.get('exp2').get('species'),
+    
+    """
+    {workflow.basedir}/bin/reformat_scmap_table.R {input.cell_type_map} {wildcards.samap_threshold} {params.species1} {params.species2} {output.comp}
+    """
+        
+
+rule report_comparison:
+    input:
+        comp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markers.tsv",
+        predictcomp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.markers.md",
+        comp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.prediction.samap.tsv",
+        predictcomp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.predictcomp.samap.md",
+        celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt",
+        samap_result="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv" 
+
+    output:
+        report="{outdir}/{exp1}_vs_{exp2}.{organism_part}/markers-{pval_limit}-{n_genes}-{min_overlap}.samap-{samap_threshold}.report.md"
     shell:
         """
         echo -e "# Known composition of inputs\n\n" > {output.report}
         cat {input.celltypes} >> {output.report}
+
         echo -e "\n# Cell group matches based on marker genes:\n" >> {output.report}
         echo -e "\n## Parameters  \n\n - Minimum p value: {wildcards.pval_limit}  \n - Minimum proportion overlap: {wildcards.min_overlap}  \n" >> {output.report}
         echo -e "## Results \n" >> {output.report}
-        cat {input.predictcomp} >> {output.report}
-        cat {input.comp} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
-
+        echo -e "### Marker gene set overlap \n" >> {output.report}
+        cat {input.predictcomp_markers} >> {output.report}
+        cat {input.comp_markers} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
         head -n 1 tab.tmp >> {output.report}
         echo -e "| --- | --- | --- | --- | --- | --- |" >> {output.report}
         tail -n +2 tab.tmp >> {output.report}
         rm tab.tmp
+
+        echo -e "\n# Cell group matches based on SAMap results:\n" >> {output.report}
+        echo -e "\n## Parameters  \n\n - SAMap minimum score threshold: {wildcards.samap_threshold}  \n" >> {output.report}
+        echo -e "## Results \n" >> {output.report}
+        echo -e "### SAMap \n" >> {output.report}
+        cat {input.predictcomp_samap} >> {output.report}
+        cat {input.comp_samap} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
+        head -n 1 tab.tmp >> {output.report}
+        echo -e "| --- | --- | --- |" >> {output.report}
+        tail -n +2 tab.tmp >> {output.report}
+        rm tab.tmp
+
+
         """
