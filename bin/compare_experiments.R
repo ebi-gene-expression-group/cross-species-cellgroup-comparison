@@ -63,7 +63,7 @@ cluster_matches$intersect_gene_symbols <- unlist(lapply(gene_intersects[names(va
 
 # Get the set of matching clusters passing criteria for each query
 cluster_matches <- cluster_matches[order(cluster_matches$intersect_prop, decreasing = TRUE),]
-cluster_matches_by_query <- split(cluster_matches, cluster_matches[[paste(species1, 'cluster')]])
+cluster_matches_by_query <- split(cluster_matches, cluster_matches[[paste(species_1, 'cluster')]])
 
 # Order such that strongest matches are first 
 match_order <- order(unlist(lapply(cluster_matches_by_query, function(x) max(x$intersect_prop))), decreasing = TRUE)
