@@ -56,13 +56,13 @@
 
 7 of 8 known intersecting cell types were predicted as top match by marker gene composition:  
 
-endothelial cell
-pancreatic A cell
-pancreatic D cell
-pancreatic ductal cell
-pancreatic PP cell
-pancreatic stellate cell
-type B pancreatic cell
+endothelial cell  
+pancreatic A cell  
+pancreatic D cell  
+pancreatic ductal cell  
+pancreatic PP cell  
+pancreatic stellate cell  
+type B pancreatic cell  
 
 7 of 8 known intersecting cell types were predicted as a match (at any rank).  
 
@@ -99,13 +99,13 @@ type B pancreatic cell
 
 7 of 8 known intersecting cell types were predicted as top match by marker gene composition:  
 
-endothelial cell
-pancreatic A cell
-pancreatic D cell
-pancreatic ductal cell
-pancreatic PP cell
-pancreatic stellate cell
-type B pancreatic cell
+endothelial cell  
+pancreatic A cell  
+pancreatic D cell  
+pancreatic ductal cell  
+pancreatic PP cell  
+pancreatic stellate cell  
+type B pancreatic cell  
 
 8 of 8 known intersecting cell types were predicted as a match (at any rank).  
 
