@@ -85,11 +85,11 @@ rule intersect_metadatas:
          'envs/ontology_index.yml'
     
     input:
-        metas = expand("{{outdir}}/{exp}.meta.tsv", exp = EXPS),
+        metas = expand("{outdir}/{exp}.meta.tsv", outdir=OUT_DIR, exp = EXPS),
         ontology_file="%s/%s" % (IN_DIR, config.get('ontology_file'))
     
     output:
-        dynamic(expand("{{outdir}}/{exp}.{{organism_part}}.submeta.tsv", exp=EXPS))
+        dynamic(expand("{outdir}/{exp}.{{organism_part}}.submeta.tsv", outdir=OUT_DIR, exp=EXPS))
 
     shell:
         """
@@ -252,6 +252,8 @@ rule compare_celltypes:
     shell:
         """
         echo -e "## {wildcards.exp1} {wildcards.organism_part} cell types:\n" > {output.txt}
+        cat {input.exp1} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
+        echo -e "\n" >> {output.txt}
 
         echo -e "## {wildcards.exp2} {wildcards.organism_part} cell types:\n" >> {output.txt}
         cat {input.exp2} | sed 's/$/  /' | sed 's/^/ - /g' >> {output.txt}
@@ -274,10 +276,12 @@ rule compare_celltypes_prediction:
         """
         comm -12 {input.exp1} {input.exp2} > intersect.txt
         intersect=$(cat intersect.txt | wc -l)
-        correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '!_[$1]++' | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
-        echo -e "$correct of $intersect known intersecting cell types were predicted as top match by marker gene composition.  \n" > {output.md}
-        almost_correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq) | wc -l)
-        echo -e "$almost_correct of $intersect known intersecting cell types were predicted as a match (at any rank).  \n" >> {output.md}
+        correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '!_[$1]++' | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq))
+        correct_count=$(echo -e "$correct" | wc -l)
+        echo -e "$correct_count of $intersect known intersecting cell types were predicted as top match by marker gene composition:  \n\n$correct\n" > {output.md}
+        almost_correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq))
+        almost_correct_count=$(echo -e "$almost_correct" | wc -l)
+        echo -e "$almost_correct_count of $intersect known intersecting cell types were predicted as a match (at any rank).  \n" >> {output.md}
         """
 
 rule samap_config:
@@ -316,6 +320,9 @@ rule run_samap:
 # Get SAMap predictions in format we can use 
 
 rule parse_samap_predictions:
+    conda:
+         'envs/reshape2.yml'
+    
     input:
         cell_type_map="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv",
 
@@ -326,9 +333,10 @@ rule parse_samap_predictions:
         species1=config.get('exp1').get('species'),
         species2=config.get('exp2').get('species'),
     
-    """
-    {workflow.basedir}/bin/reformat_scmap_table.R {input.cell_type_map} {wildcards.samap_threshold} {params.species1} {params.species2} {output.comp}
-    """
+    shell:
+        """
+        {workflow.basedir}/bin/reformat_scmap_table.R {input.cell_type_map} {wildcards.samap_threshold} {params.species1} {params.species2} {output.comp}
+        """
         
 
 rule report_comparison:
@@ -350,7 +358,6 @@ rule report_comparison:
         echo -e "\n# Cell group matches based on marker genes:\n" >> {output.report}
         echo -e "\n## Parameters  \n\n - Minimum p value: {wildcards.pval_limit}  \n - Minimum proportion overlap: {wildcards.min_overlap}  \n" >> {output.report}
         echo -e "## Results \n" >> {output.report}
-        echo -e "### Marker gene set overlap \n" >> {output.report}
         cat {input.predictcomp_markers} >> {output.report}
         cat {input.comp_markers} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
         head -n 1 tab.tmp >> {output.report}
@@ -361,7 +368,6 @@ rule report_comparison:
         echo -e "\n# Cell group matches based on SAMap results:\n" >> {output.report}
         echo -e "\n## Parameters  \n\n - SAMap minimum score threshold: {wildcards.samap_threshold}  \n" >> {output.report}
         echo -e "## Results \n" >> {output.report}
-        echo -e "### SAMap \n" >> {output.report}
         cat {input.predictcomp_samap} >> {output.report}
         cat {input.comp_samap} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
         head -n 1 tab.tmp >> {output.report}
