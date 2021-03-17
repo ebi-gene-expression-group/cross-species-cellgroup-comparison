@@ -3,6 +3,30 @@
 
 ## E-MTAB-8410 ascending_colon cell types:
 
+ - B cell  
+ - CD4-positive, alpha-beta T cell  
+ - CD8-positive, alpha-beta T cell  
+ - consensus molecular subtype 2 epithelial cell  
+ - consensus molecular subtype 3 epithelial cell  
+ - conventional dendritic cell  
+ - endothelial cell of lymphatic vessel  
+ - endothelial stalk cell  
+ - endothelial tip cell  
+ - enterocyte of epithelium of large intestine  
+ - epithelial cell of large intestine  
+ - glial cell  
+ - goblet cell  
+ - IgA plasma cell  
+ - mast cell  
+ - myeloid cell  
+ - myofibroblast  
+ - nan  
+ - natural killer cell  
+ - pericyte  
+ - smooth muscle cell of large intestine  
+ - stromal cell  
+
+
 ## E-ENAD-15 ascending_colon cell types:
 
  - Brush cell of epithelium proper of large intestine  
@@ -29,7 +53,10 @@
 
 ## Results 
 
-2 of 3 known intersecting cell types were predicted as top match by marker gene composition.  
+2 of 3 known intersecting cell types were predicted as top match by marker gene composition:  
+
+enterocyte of epithelium of large intestine  
+epithelial cell of large intestine  
 
 2 of 3 known intersecting cell types were predicted as a match (at any rank).  
 
@@ -58,38 +85,40 @@
 
 ## Results 
 
-2 of 3 known intersecting cell types were predicted as top match by marker gene composition.  
+2 of 3 known intersecting cell types were predicted as top match by marker gene composition:  
+
+enterocyte of epithelium of large intestine  
+epithelial cell of large intestine  
 
 3 of 3 known intersecting cell types were predicted as a match (at any rank).  
 
 | homo_sapiens cluster | mus_musculus cluster | score |  
 | --- | --- | --- |
-| nan | enterocyte of epithelium of large intestine | 0.955117430573177 |  
-| IgA plasma cell | epithelial cell of large intestine | 0.8966383368581 |  
-| nan | epithelial cell of large intestine | 0.778996200947023 |  
-| myeloid cell | Brush cell of epithelium proper of large intestine | 0.624838368565828 |  
-| IgA plasma cell | large intestine goblet cell | 0.619219831962912 |  
-| epithelial cell of large intestine | epithelial cell of large intestine | 0.590662700280745 |  
-| nan | large intestine goblet cell | 0.541998914765953 |  
-| stromal cell | epithelial cell of large intestine | 0.527590063493699 |  
-| smooth muscle cell of large intestine | epithelial cell of large intestine | 0.260004191994509 |  
-| glial cell | enterocyte of epithelium of large intestine | 0.214150100885773 |  
-| nan | Brush cell of epithelium proper of large intestine | 0.184570005017829 |  
-| stromal cell | enteroendocrine cell | 0.149043231494611 |  
-| endothelial stalk cell | epithelial cell of large intestine | 0.143002535205754 |  
-| stromal cell | nan | 0.140472164801532 |  
-| myofibroblast | epithelial cell of large intestine | 0.13549063173113 |  
-| stromal cell | enterocyte of epithelium of large intestine | 0.133859391458413 |  
-| conventional dendritic cell | Brush cell of epithelium proper of large intestine | 0.127686243246932 |  
-| endothelial tip cell | epithelial cell of large intestine | 0.12706722634323 |  
-| nan | enteroendocrine cell | 0.122737121452306 |  
-| glial cell | enteroendocrine cell | 0.103347332393476 |  
-| glial cell | Brush cell of epithelium proper of large intestine | 0.0997928111127974 |  
-| epithelial cell of large intestine | large intestine goblet cell | 0.0967938867219241 |  
-| consensus molecular subtype 2 epithelial cell | epithelial cell of large intestine | 0.0940494698024881 |  
-| glial cell | epithelial cell of large intestine | 0.0916415244803302 |  
-| nan | nan | 0.0865051016437675 |  
-| IgA plasma cell | enterocyte of epithelium of large intestine | 0.0669783665400252 |  
-| consensus molecular subtype 3 epithelial cell | epithelial cell of large intestine | 0.0665209192168508 |  
-| enterocyte of epithelium of large intestine | enterocyte of epithelium of large intestine | 0.0606411586157646 |  
-| endothelial cell of lymphatic vessel | enterocyte of epithelium of large intestine | 9.52248356431172e-05 |  
+| nan | enterocyte of epithelium of large intestine | 0.95175376825668 |  
+| IgA plasma cell | epithelial cell of large intestine | 0.890632973609581 |  
+| nan | epithelial cell of large intestine | 0.770004849750708 |  
+| IgA plasma cell | large intestine goblet cell | 0.676279958356523 |  
+| myeloid cell | Brush cell of epithelium proper of large intestine | 0.615715408010608 |  
+| epithelial cell of large intestine | epithelial cell of large intestine | 0.590679618919021 |  
+| stromal cell | epithelial cell of large intestine | 0.544103780768995 |  
+| nan | large intestine goblet cell | 0.541358406241849 |  
+| smooth muscle cell of large intestine | epithelial cell of large intestine | 0.249658810465008 |  
+| glial cell | enterocyte of epithelium of large intestine | 0.205581386978538 |  
+| nan | Brush cell of epithelium proper of large intestine | 0.181191233719937 |  
+| stromal cell | enteroendocrine cell | 0.160700191673694 |  
+| myofibroblast | epithelial cell of large intestine | 0.150396305644203 |  
+| conventional dendritic cell | Brush cell of epithelium proper of large intestine | 0.142132129183133 |  
+| endothelial stalk cell | epithelial cell of large intestine | 0.138907831795243 |  
+| stromal cell | nan | 0.135683200307457 |  
+| endothelial tip cell | epithelial cell of large intestine | 0.130699634438319 |  
+| stromal cell | enterocyte of epithelium of large intestine | 0.121849456161514 |  
+| nan | enteroendocrine cell | 0.114218310406601 |  
+| glial cell | epithelial cell of large intestine | 0.101897008814485 |  
+| epithelial cell of large intestine | large intestine goblet cell | 0.0976875843197692 |  
+| glial cell | Brush cell of epithelium proper of large intestine | 0.0974296964043682 |  
+| consensus molecular subtype 2 epithelial cell | epithelial cell of large intestine | 0.094479289117877 |  
+| glial cell | enteroendocrine cell | 0.0913880833340319 |  
+| nan | nan | 0.084892012583464 |  
+| consensus molecular subtype 3 epithelial cell | epithelial cell of large intestine | 0.0730771303891759 |  
+| IgA plasma cell | enterocyte of epithelium of large intestine | 0.07157525075408 |  
+| enterocyte of epithelium of large intestine | enterocyte of epithelium of large intestine | 0.063783780634075 |  
