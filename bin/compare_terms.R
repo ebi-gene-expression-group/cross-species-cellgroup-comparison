@@ -91,11 +91,13 @@ meta2 <- meta2[meta2[[ontIdCol]] %in% common_parts,  ]
 metas1 <- split(meta1, meta1[[ontNameCol]])
 metas2 <- split(meta2, meta2[[ontNameCol]])
 
+expNames=basename(sub('.meta.tsv', '', c(metaFile1, metaFile2)))
 dir.create(outPath, showWarnings=FALSE)
 
 for (metaName in names(metas1)){
-  write.table(metas1[[metaName]], file.path(outPath, paste0(basename(sub('.meta.tsv', '', metaFile1)), '.', gsub(' ', '_', metaName), '.submeta.tsv')), quote = FALSE, row.names = FALSE, sep = "\t")
-  write.table(metas2[[metaName]], file.path(outPath, paste0(basename(sub('.meta.tsv', '', metaFile2)), '.', gsub(' ', '_', metaName), '.submeta.tsv')), quote = FALSE, row.names = FALSE, sep = "\t")
+  outputFilePaths=file.path(outPath, paste0(expNames, '.', gsub(' ', '_', metaName), '.submeta.tsv'))
+  write.table(metas1[[metaName]], outputFilePaths[1], quote = FALSE, row.names = FALSE, sep = "\t")
+  write.table(metas2[[metaName]], outputFilePaths[2], quote = FALSE, row.names = FALSE, sep = "\t")
 }
 
 

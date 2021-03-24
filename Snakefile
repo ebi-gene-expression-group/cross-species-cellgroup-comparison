@@ -8,6 +8,7 @@ wildcard_constraints:
     exp = "[^\.]+",
     exp1 = "[^\.]+",
     exp2 = "[^\.]+",
+    organism_part = "[^\.]+",
     method = "[^\.]+",
     pval_limit = "[^\-]+",
     n_genes = "[^\-]+",
@@ -19,16 +20,18 @@ n_gene_limits = [ str(x) for x in config.get('compare_experiments').get('n_genes
 min_overlap_limits = [ str(x) for x in config.get('compare_experiments').get('min_overlap') ]
 samap_thresholds = [ str(x) for x in config.get('compare_experiments').get('samap_threshold') ]
 
+EXPS = [ config.get(exp).get('id') for exp in ('exp1', 'exp2') ]
 MARKERS_PARAMSETS = [ '-'.join(x) for x in list(itertools.product(pval_limits, n_gene_limits, min_overlap_limits)) ]
-EXPS=[config.get("exp1").get('id'), config.get("exp2").get("id")]
+
+IN_DIR='inputs'
+OUT_DIR='output'
+COMP_OUT_DIR='%s/%s_vs_%s' % (OUT_DIR, EXPS[0], EXPS[1])
+
 
 rule all:
     input:
-        expand("%s/{exp}.markers.tsv" % OUT_DIR, exp=EXPS),
-        dynamic(expand("%s/{exp}.{{organism_part}}.submeta.tsv" % OUT_DIR, exp=EXPS)),
-        dynamic(expand("%s/%s_vs_%s.{{organism_part}}/markers-{pval_limit}-{n_genes}-{min_overlap}.samap-{samap_threshold}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), pval_limit = pval_limits, n_genes = n_gene_limits, min_overlap = min_overlap_limits, samap_threshold = samap_thresholds))
+        "%s/.done" % COMP_OUT_DIR        
 
-        #dynamic(expand("%s/%s_vs_%s.{{organism_part}}/markers-{paramset}.samap-.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')), paramset = MARKERS_PARAMSETS))
 
 rule symlink_inputs:
     input:
@@ -80,21 +83,22 @@ rule extract_celltypes:
         tail -n +2 {input.meta} | cut -f $index | sort | uniq > {output.celltypes}
         """
 
-rule intersect_metadatas:
+checkpoint intersect_metadatas:
     conda:
          'envs/ontology_index.yml'
     
     input:
-        metas = expand("{outdir}/{exp}.meta.tsv", outdir=OUT_DIR, exp = EXPS),
-        ontology_file="%s/%s" % (IN_DIR, config.get('ontology_file'))
-    
-    output:
-        dynamic(expand("{outdir}/{exp}.{{organism_part}}.submeta.tsv", outdir=OUT_DIR, exp=EXPS))
+        ontology_file="%s/%s" % (IN_DIR, config.get('ontology_file')),
+        meta1 = '{out_dir}/{exp1}.meta.tsv',
+        meta2 = '{out_dir}/{exp2}.meta.tsv'
 
+    output:
+        submetas = directory('{out_dir}/{exp1}_vs_{exp2}/submetas/')
+    
     shell:
         """
-        bin/compare_terms.R {input.ontology_file} {input.metas[0]} {input.metas[1]} \
-            organism_part_ontology organism_part {OUT_DIR}
+        bin/compare_terms.R {input.ontology_file} {input.meta1} {input.meta2} \
+            organism_part_ontology organism_part {output.submetas}
         """
 
 rule subset_data_toparts:
@@ -104,14 +108,14 @@ rule subset_data_toparts:
     priority: 1    
 
     input:
-        adata="{prefix}.h5ad",
-        sub="{prefix}.{organism_part}.submeta.tsv"        
+        adata="{outdir}/{prefix}.h5ad",
+        sub="%s/submetas/{prefix}.{organism_part}.submeta.tsv" % COMP_OUT_DIR       
 
     resources:
         mem_mb=lambda wildcards, attempt: attempt * 4000
     
     output:
-        adata_sub=temp("{prefix}.{organism_part}.sub.h5ad")
+        adata_sub=temp("{outdir}/{prefix}.{organism_part}.sub.h5ad")
 
     shell:
         """
@@ -228,7 +232,7 @@ rule compare_experiments:
         ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
-        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markers.tsv"     
+        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markeroverlap.tsv"     
     
     params:
         species1=config.get('exp1').get('species'),
@@ -341,8 +345,8 @@ rule parse_samap_predictions:
 
 rule report_comparison:
     input:
-        comp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markers.tsv",
-        predictcomp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.markers.md",
+        comp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markeroverlap.tsv",
+        predictcomp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.markeroverlap.md",
         comp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.prediction.samap.tsv",
         predictcomp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.predictcomp.samap.md",
         celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt",
@@ -377,3 +381,27 @@ rule report_comparison:
 
 
         """
+
+# Use the checkpointed intersect_metadatas step to work out what common
+# organism parts we had and generate a list of outputs
+
+def organism_part_outputs(wildcards):
+    checkpoint_output = checkpoints.intersect_metadatas.get(**wildcards).output[0]
+    organism_parts, = glob_wildcards(os.path.join(checkpoint_output, "%s.{organism_part}.submeta.tsv" % EXPS[0]))
+    return expand("%s/%s_vs_%s.{organism_part}/markers-{pval_limit}-{n_genes}-{min_overlap}.samap-{samap_threshold}.report.md" % (OUT_DIR, config.get('exp1').get('id'), config.get('exp2').get('id')),
+           pval_limit=pval_limits,
+           n_genes = n_gene_limits,
+           min_overlap = min_overlap_limits,
+           samap_threshold = samap_thresholds,
+           organism_part = organism_parts)
+
+rule aggregate_reports:
+    input:
+        organism_part_outputs
+    output:
+        done="{out_dir}/{exp1}_vs_{exp2}/.done"
+
+    shell:
+        """
+        touch {output.done}
+        """    
