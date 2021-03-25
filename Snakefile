@@ -360,7 +360,7 @@ rule report_comparison:
         cat {input.celltypes} >> {output.report}
 
         echo -e "\n# Cell group matches based on marker genes:\n" >> {output.report}
-        echo -e "\n## Parameters  \n\n - Minimum p value: {wildcards.pval_limit}  \n - Minimum proportion overlap: {wildcards.min_overlap}  \n" >> {output.report}
+        echo -e "\n## Parameters  \n\n - Maximum p value: {wildcards.pval_limit}  \n - Minimum proportion overlap: {wildcards.min_overlap}  \n" >> {output.report}
         echo -e "## Results \n" >> {output.report}
         cat {input.predictcomp_markers} >> {output.report}
         cat {input.comp_markers} | sed 's/\t/ | /g' | sed 's/^/| /g' | sed 's/$/ |  /g' > tab.tmp
