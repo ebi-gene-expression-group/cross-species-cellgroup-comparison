@@ -49,7 +49,7 @@
 
 ## Parameters  
 
- - Minimum p value: 1  
+ - Maximum p value: 1  
  - Minimum proportion overlap: 0.05  
 
 ## Results 
