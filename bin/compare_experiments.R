@@ -9,8 +9,9 @@ species_2 <- cl[4]
 ortholog_mapping_file <- cl[5]
 pval_limit <- as.numeric(cl[6])
 ngenes <- as.numeric(cl[7])
-min_overlap <- as.numeric(cl[8])
-outfile <- cl[9]
+outfile <- cl[8]
+
+min_overlap <- 0
 
 if (ngenes == 'all'){
     ngenes <- 1000000
@@ -56,8 +57,8 @@ if (length(valid_intersects) == 0){
 
 cluster_matches <- data.frame(do.call(rbind, unlist(lapply(names(valid_intersects), function(x) strsplit(x, '\\.')), recursive = FALSE)))
 colnames(cluster_matches) <- c(paste(species_1, 'cluster'), paste(species_2, 'cluster'))
-cluster_matches$intersect <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) length(x)))
 cluster_matches$intersect_prop <- unlist(gene_intersect_props[names(valid_intersects)])
+cluster_matches$intersect <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) length(x)))
 cluster_matches$intersect_gene_ids <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) paste(x, collapse = ', ')))
 cluster_matches$intersect_gene_symbols <- unlist(lapply(gene_intersects[names(valid_intersects)], function(x) paste(ortholog_mapping[match(x, ortholog_mapping[[species_2_orth_col]]),paste0(species_2, '_gene_name')], collapse = ', ')))
 
