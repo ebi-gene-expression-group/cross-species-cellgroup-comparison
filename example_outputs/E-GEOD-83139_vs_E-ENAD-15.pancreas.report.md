@@ -46,7 +46,7 @@
 
 ## Results 
 
-![markeroverlap prediction heatmap](markeroverlap.1-100.prediction.heatmap.png)
+![markeroverlap prediction heatmap](E-GEOD-83139_vs_E-ENAD-15.pancreas.markeroverlap.1-100.prediction.heatmap.png)
 5 of 6 known intersecting cell types were predicted as top match by marker gene composition:  
 
 pancreatic A cell  
@@ -83,7 +83,7 @@ type B pancreatic cell
 
 ## Results 
 
-![samap prediction heatmap](samap.defaults.prediction.heatmap.png)
+![samap prediction heatmap](E-GEOD-83139_vs_E-ENAD-15.pancreas.samap.defaults.prediction.heatmap.png)
 4 of 6 known intersecting cell types were predicted as top match by marker gene composition:  
 
 pancreatic A cell  
@@ -95,19 +95,20 @@ type B pancreatic cell
 
 | homo_sapiens cluster | mus_musculus cluster | score |  
 | --- | --- | --- |
-| pancreatic A cell | pancreatic A cell | 0.838306932805055 |  
-| type B pancreatic cell | type B pancreatic cell | 0.742477397382721 |  
-| pancreatic ductal cell | leukocyte | 0.542889657422547 |  
-| pancreatic PP cell | pancreatic PP cell | 0.357033098774756 |  
-| mesenchymal cell | pancreatic stellate cell | 0.31278464106811 |  
-| mesenchymal cell | endothelial cell | 0.275488486692508 |  
-| pancreatic D cell | pancreatic D cell | 0.248993981912084 |  
-| nan | pancreatic D cell | 0.204677641567197 |  
-| mesenchymal cell | nan | 0.196616154855101 |  
-| nan | endothelial cell | 0.189611269261945 |  
-| nan | type B pancreatic cell | 0.176072405613714 |  
-| pancreatic ductal cell | pancreatic ductal cell | 0.138939324137135 |  
-| nan | nan | 0.129811044932004 |  
-| nan | pancreatic stellate cell | 0.0881798636654266 |  
-| nan | pancreatic PP cell | 0.0741521842980639 |  
-| nan | pancreatic A cell | 0.0556874931683043 |  
+| pancreatic A cell | pancreatic A cell | 0.840269771775861 |  
+| type B pancreatic cell | type B pancreatic cell | 0.751306107893955 |  
+| pancreatic ductal cell | leukocyte | 0.54348174245399 |  
+| pancreatic PP cell | pancreatic PP cell | 0.351844086051575 |  
+| mesenchymal cell | pancreatic stellate cell | 0.309953673059399 |  
+| mesenchymal cell | endothelial cell | 0.273549406527381 |  
+| pancreatic D cell | pancreatic D cell | 0.250213408669875 |  
+| nan | pancreatic D cell | 0.202028015232054 |  
+| mesenchymal cell | nan | 0.195276892055025 |  
+| nan | endothelial cell | 0.189307736839407 |  
+| nan | type B pancreatic cell | 0.177684322943551 |  
+| pancreatic ductal cell | pancreatic ductal cell | 0.13606531386968 |  
+| nan | nan | 0.135498933707604 |  
+| nan | pancreatic stellate cell | 0.0886497529424384 |  
+| nan | pancreatic PP cell | 0.0727298453267758 |  
+| nan | pancreatic A cell | 0.0553928228074687 |  
+| pancreatic ductal cell | nan | 0.0513596043911516 |  
