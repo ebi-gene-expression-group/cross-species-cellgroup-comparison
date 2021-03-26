@@ -13,7 +13,8 @@ wildcard_constraints:
     pval_limit = "[^\-]+",
     n_genes = "[^\-]+",
     min_overlap = "[^\-]+",
-    samap_threshold = "[^\-]+"
+    samap_threshold = "[^\-]+",
+    subdir = "[^\/]+"
 
 pval_limits = [ str(x) for x in config.get('compare_experiments').get('pval_limit') ]
 n_gene_limits = [ str(x) for x in config.get('compare_experiments').get('n_genes') ]
@@ -232,7 +233,7 @@ rule compare_experiments:
         ortholog_mapping_file="%s/%s" % (IN_DIR, config.get('ortholog_mapping_file'))
 
     output:
-        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markeroverlap.tsv"     
+        comp="{prefix}/{exp1}_vs_{exp2}.{organism_part}/markeroverlap.{pval_limit}-{n_genes}.prediction.tsv"     
     
     params:
         species1=config.get('exp1').get('species'),
@@ -242,7 +243,39 @@ rule compare_experiments:
         """
         bin/compare_experiments.R {input.exp1} {params.species1} {input.exp2} \
             {params.species2} {input.ortholog_mapping_file} {wildcards.pval_limit} \
-            {wildcards.n_genes} {wildcards.min_overlap} {output.comp}
+            {wildcards.n_genes} {output.comp}
+        """
+
+rule make_prediction_heatmap:
+    conda:   
+      'envs/pheatmap.yml'
+    
+    input:
+        comp="{outdir}/{subdir}/{method}.{predict_params}.prediction.tsv",
+        
+    output:
+        heatmap="{outdir}/{subdir}/{subdir}.{method}.{predict_params}.prediction.heatmap.png",
+    
+    shell:
+        """
+        bin/make_prediction_heatmap.R {input.comp} {wildcards.method} '{wildcards.method} score' {output.heatmap}
+        """    
+
+
+rule filter_prediction:
+    input:
+        comp="{prefix}/{method}.{params}.prediction.tsv"
+
+    output:
+        filtered="{prefix}/{method}.{params}.prediction.filtered_{threshold}.tsv"
+
+    shell:
+        """
+        awk -F"\\t" -v threshold={wildcards.threshold} '{{ if($3 >= threshold) {{ print }}}}' {input.comp} > {output.filtered}
+        if [ ! -s {output.filtered} ]; then
+            echo "Did not find any cell group matches passing threshold of {wildcards.threshold} for {wildcards.method}" 1>&2
+            exit 1
+        fi
         """
 
 rule compare_celltypes:
@@ -271,10 +304,11 @@ rule compare_celltypes_prediction:
     input:
         exp1 = "{outdir}/{exp1}.{organism_part}.sub.celltypes.tsv",
         exp2 = "{outdir}/{exp2}.{organism_part}.sub.celltypes.tsv",
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{predict_params}.prediction.{method}.tsv",
+        heatmap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{exp1}_vs_{exp2}.{organism_part}.{method}.{predict_params}.prediction.heatmap.png",
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{method}.{predict_params}.prediction.filtered_{threshold}.tsv",
 
     output:
-        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/{predict_params}.predictcomp.{method}.md")     
+        md=temp("{outdir}/{exp1}_vs_{exp2}.{organism_part}/{method}.{predict_params}.filtered_{threshold}.predictcomp.md")     
     
     shell:
         """
@@ -282,7 +316,8 @@ rule compare_celltypes_prediction:
         intersect=$(cat intersect.txt | wc -l)
         correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F'\\t' '!_[$1]++' | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq) | sed 's/$/  /')
         correct_count=$(echo -e "$correct" | wc -l)
-        echo -e "$correct_count of $intersect known intersecting cell types were predicted as top match by marker gene composition:  \n\n$correct\n" > {output.md}
+        echo -e "![{wildcards.method} prediction heatmap]($(basename {input.heatmap}))" > {output.md}
+        echo -e "$correct_count of $intersect known intersecting cell types were predicted as top match by marker gene composition:  \n\n$correct\n" >> {output.md}
         almost_correct=$(comm -12 intersect.txt <(cat {input.comp} | awk -F '\t' '{{if($1==$2) print $0}}' | awk -F'\\t' '{{print $1}}' | sort | uniq))
         almost_correct_count=$(echo -e "$almost_correct" | wc -l)
         echo -e "$almost_correct_count of $intersect known intersecting cell types were predicted as a match (at any rank).  \n" >> {output.md}
@@ -331,7 +366,7 @@ rule parse_samap_predictions:
         cell_type_map="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv",
 
     output:
-        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.prediction.samap.tsv"
+        comp="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap.defaults.prediction.tsv"     
 
     params:
         species1=config.get('exp1').get('species'),
@@ -339,16 +374,16 @@ rule parse_samap_predictions:
     
     shell:
         """
-        {workflow.basedir}/bin/reformat_scmap_table.R {input.cell_type_map} {wildcards.samap_threshold} {params.species1} {params.species2} {output.comp}
+        {workflow.basedir}/bin/reformat_scmap_table.R {input.cell_type_map} {params.species1} {params.species2} {output.comp}
         """
         
 
 rule report_comparison:
     input:
-        comp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.prediction.markeroverlap.tsv",
-        predictcomp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{pval_limit}-{n_genes}-{min_overlap}.predictcomp.markeroverlap.md",
-        comp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.prediction.samap.tsv",
-        predictcomp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/{samap_threshold}.predictcomp.samap.md",
+        comp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/markeroverlap.{pval_limit}-{n_genes}.prediction.filtered_{min_overlap}.tsv",
+        predictcomp_markers="{outdir}/{exp1}_vs_{exp2}.{organism_part}/markeroverlap.{pval_limit}-{n_genes}.filtered_{min_overlap}.predictcomp.md",
+        comp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap.defaults.prediction.filtered_{samap_threshold}.tsv",
+        predictcomp_samap="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap.defaults.filtered_{samap_threshold}.predictcomp.md",
         celltypes="{outdir}/{exp1}_vs_{exp2}.{organism_part}/celltypecomp.txt",
         samap_result="{outdir}/{exp1}_vs_{exp2}.{organism_part}/samap_celltype_map.tsv" 
 

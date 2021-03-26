@@ -1,0 +1,5 @@
+name: pheatmap
+dependencies:
+    - r-pheatmap
+    - r-gridgraphics
+    - r-reshape2
