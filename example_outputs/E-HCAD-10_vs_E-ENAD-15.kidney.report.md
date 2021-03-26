@@ -63,7 +63,7 @@
 
 ## Results 
 
-![markeroverlap prediction heatmap](markeroverlap.1-100.prediction.heatmap.png)
+![markeroverlap prediction heatmap](E-HCAD-10_vs_E-ENAD-15.kidney.markeroverlap.1-100.prediction.heatmap.png)
 4 of 5 known intersecting cell types were predicted as top match by marker gene composition:  
 
 endothelial cell  
@@ -118,7 +118,7 @@ natural killer cell
 
 ## Results 
 
-![samap prediction heatmap](samap.defaults.prediction.heatmap.png)
+![samap prediction heatmap](E-HCAD-10_vs_E-ENAD-15.kidney.samap.defaults.prediction.heatmap.png)
 4 of 5 known intersecting cell types were predicted as top match by marker gene composition:  
 
 endothelial cell  
