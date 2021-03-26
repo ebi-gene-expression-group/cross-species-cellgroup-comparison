@@ -39,7 +39,7 @@
 
 ## Results 
 
-![markeroverlap prediction heatmap](markeroverlap.1-100.prediction.heatmap.png)
+![markeroverlap prediction heatmap](E-GEOD-125970_vs_E-ENAD-15.colon.markeroverlap.1-100.prediction.heatmap.png)
 2 of 3 known intersecting cell types were predicted as top match by marker gene composition:  
 
 enterocyte of epithelium of large intestine  
@@ -67,7 +67,7 @@ large intestine goblet cell
 
 ## Results 
 
-![samap prediction heatmap](samap.defaults.prediction.heatmap.png)
+![samap prediction heatmap](E-GEOD-125970_vs_E-ENAD-15.colon.samap.defaults.prediction.heatmap.png)
 2 of 3 known intersecting cell types were predicted as top match by marker gene composition:  
 
 enterocyte of epithelium of large intestine  
