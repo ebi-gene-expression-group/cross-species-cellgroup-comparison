@@ -2,6 +2,8 @@
 
 In Single-cell Expression Atlas we're interested in relating cell groupings (clusters, cell types) between experiments and across species boundaries. There is a naive way of doing this using marker genes, and more advanced ways such as [SAMap](https://github.com/atarashansky/SAMap). This workflow executes both of those methods (note: the workflow was written before most recent SAMap developments, so is a little of of date in that regard), and produces comparisons of the number of the predicted cross-species intersecting cell groups. See [this presentation](https://docs.google.com/presentation/d/1t0HGBIOc7mU2CmKuP2oXVKAMW6V1FzSC/edit?usp=sharing&ouid=108448427482902993534&rtpof=true&sd=true) for some initial results.
 
+Note that SAMap is executed with a [workflow](https://github.com/ebi-gene-expression-group/samap-workflow) that parallelises a BLAST step.
+
 ## Naive marker-driven method
 
 It is possible to compare cell groups (clusters, cell types) across species via the 'marker' genes of each group. Since each set of marker genes is a product of the context in which it was derived (sorted cell population, sub-tissue, tissue, whole organism), that context must be matched for comparison of marker gene sets (via ortholog relationships) to be valid. With that in mind this workflow will:
